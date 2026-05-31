@@ -1,5 +1,6 @@
-package cl.education.enrollment.common;
+package cl.education.enrollment.exception;
 
+import cl.education.enrollment.dto.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
@@ -52,6 +53,19 @@ public class GlobalExceptionHandler {
     ) {
         return buildResponse(
                 HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        );
+    }
+
+    @ExceptionHandler(StorageOperationException.class)
+    public ResponseEntity<ApiErrorResponse> handleStorageOperation(
+            StorageOperationException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_GATEWAY,
                 exception.getMessage(),
                 request.getRequestURI(),
                 List.of()

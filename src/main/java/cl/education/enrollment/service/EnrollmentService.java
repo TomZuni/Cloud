@@ -1,9 +1,15 @@
-package cl.education.enrollment.enrollment;
+package cl.education.enrollment.service;
 
-import cl.education.enrollment.common.BusinessRuleException;
-import cl.education.enrollment.common.ResourceNotFoundException;
-import cl.education.enrollment.course.Course;
-import cl.education.enrollment.course.CourseRepository;
+import cl.education.enrollment.dto.EnrolledCourseResponse;
+import cl.education.enrollment.dto.EnrollmentRequest;
+import cl.education.enrollment.dto.EnrollmentSummaryResponse;
+import cl.education.enrollment.exception.BusinessRuleException;
+import cl.education.enrollment.exception.ResourceNotFoundException;
+import cl.education.enrollment.model.Course;
+import cl.education.enrollment.model.Enrollment;
+import cl.education.enrollment.model.EnrollmentItem;
+import cl.education.enrollment.repository.CourseRepository;
+import cl.education.enrollment.repository.EnrollmentRepository;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;

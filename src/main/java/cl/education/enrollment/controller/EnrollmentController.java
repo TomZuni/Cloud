@@ -1,5 +1,8 @@
-package cl.education.enrollment.enrollment;
+package cl.education.enrollment.controller;
 
+import cl.education.enrollment.dto.EnrollmentRequest;
+import cl.education.enrollment.dto.EnrollmentSummaryResponse;
+import cl.education.enrollment.service.EnrollmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;

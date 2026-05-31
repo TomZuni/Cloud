@@ -1,4 +1,4 @@
-package cl.education.enrollment.common;
+package cl.education.enrollment.exception;
 
 public class BusinessRuleException extends RuntimeException {
 

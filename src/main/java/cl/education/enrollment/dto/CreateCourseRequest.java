@@ -1,4 +1,4 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;

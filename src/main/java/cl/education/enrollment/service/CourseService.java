@@ -1,5 +1,10 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.service;
 
+import cl.education.enrollment.dto.CourseResponse;
+import cl.education.enrollment.dto.CreateCourseRequest;
+import cl.education.enrollment.mapper.CourseMapper;
+import cl.education.enrollment.model.Course;
+import cl.education.enrollment.repository.CourseRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

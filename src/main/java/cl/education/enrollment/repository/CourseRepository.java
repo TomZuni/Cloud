@@ -1,5 +1,6 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.repository;
 
+import cl.education.enrollment.model.Course;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 

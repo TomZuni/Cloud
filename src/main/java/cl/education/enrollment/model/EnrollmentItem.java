@@ -1,6 +1,5 @@
-package cl.education.enrollment.enrollment;
+package cl.education.enrollment.model;
 
-import cl.education.enrollment.course.Course;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

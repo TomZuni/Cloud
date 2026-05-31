@@ -1,4 +1,4 @@
-package cl.education.enrollment.enrollment;
+package cl.education.enrollment.model;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

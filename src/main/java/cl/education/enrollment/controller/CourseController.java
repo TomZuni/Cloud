@@ -1,5 +1,8 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.controller;
 
+import cl.education.enrollment.dto.CourseResponse;
+import cl.education.enrollment.dto.CreateCourseRequest;
+import cl.education.enrollment.service.CourseService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

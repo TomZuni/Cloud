@@ -1,4 +1,7 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.mapper;
+
+import cl.education.enrollment.dto.CourseResponse;
+import cl.education.enrollment.model.Course;
 
 public final class CourseMapper {
 

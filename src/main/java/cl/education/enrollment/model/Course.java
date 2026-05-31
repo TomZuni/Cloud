@@ -1,4 +1,4 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

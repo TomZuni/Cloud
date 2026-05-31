@@ -1,4 +1,4 @@
-package cl.education.enrollment.common;
+package cl.education.enrollment.dto;
 
 import java.time.Instant;
 import java.util.List;

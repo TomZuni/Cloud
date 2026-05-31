@@ -1,4 +1,4 @@
-package cl.education.enrollment.course;
+package cl.education.enrollment.dto;
 
 import java.math.BigDecimal;
 

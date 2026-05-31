@@ -1,15 +1,18 @@
 # Course Enrollment API
 
-Microservicio Spring Boot para administrar la oferta de cursos virtuales e inscripciones de estudiantes.
+Microservicio Spring Boot para administrar cursos virtuales, inscripciones y archivos de resumen almacenados en AWS S3.
 
 ## Funcionalidades
 
-- Consulta de cursos disponibles con nombre, instructor, duración y costo.
-- Creación de nuevos cursos con persistencia en Oracle Cloud.
-- Inscripción de estudiantes en uno o más cursos.
-- Resumen de inscripción con cursos seleccionados, costo por curso y total a pagar.
-- Imagen Docker generada y publicada automáticamente en Docker Hub al hacer push a `main`.
-- Despliegue automático de la imagen en una instancia EC2.
+- Consulta de cursos disponibles con nombre, instructor, duracion y costo.
+- Creacion de nuevos cursos con persistencia en Oracle Cloud.
+- Inscripcion de estudiantes en uno o mas cursos.
+- Resumen de inscripcion con cursos seleccionados, costo por curso y total a pagar.
+- Generacion del resumen como archivo descargable.
+- Carga del resumen generado a un bucket S3.
+- Reemplazo, descarga y eliminacion del resumen almacenado en S3.
+- Imagen Docker generada y publicada automaticamente en Docker Hub al hacer push a `main`.
+- Despliegue automatico de la imagen en una instancia EC2.
 
 ## Endpoints
 
@@ -17,20 +20,6 @@ Microservicio Spring Boot para administrar la oferta de cursos virtuales e inscr
 
 ```http
 GET /api/courses
-```
-
-Respuesta:
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Spring Boot",
-    "instructor": "Ana Soto",
-    "durationHours": 32,
-    "cost": 150000.00
-  }
-]
 ```
 
 ### Crear curso
@@ -64,40 +53,68 @@ Content-Type: application/json
 }
 ```
 
-Respuesta:
+### Descargar resumen generado
 
-```json
-{
-  "enrollmentId": 10,
-  "studentName": "Camila Perez",
-  "studentEmail": "camila@example.com",
-  "courses": [
-    {
-      "courseId": 1,
-      "name": "Spring Boot",
-      "cost": 150000.00
-    },
-    {
-      "courseId": 2,
-      "name": "Cloud Computing",
-      "cost": 120000.00
-    }
-  ],
-  "totalCost": 270000.00,
-  "createdAt": "2026-05-25T12:00:00Z"
-}
+Genera el archivo fisico del resumen para guardarlo desde Postman o el navegador.
+
+```http
+GET /api/enrollments/{enrollmentId}/summary
 ```
 
-## Configuración local
+Archivo generado:
 
-El servicio toma la conexión a Oracle desde variables de entorno:
+```text
+resumen-inscripcion-{enrollmentId}.txt
+```
+
+### Subir resumen generado a S3
+
+```http
+POST /api/enrollments/{enrollmentId}/summary/s3
+```
+
+El archivo queda guardado con esta jerarquia:
+
+```text
+inscripciones/{enrollmentId}/resumen-inscripcion-{enrollmentId}.txt
+```
+
+### Reemplazar resumen en S3
+
+En Postman usar `Body > form-data`, key `file`, tipo `File`.
+
+```http
+PUT /api/enrollments/{enrollmentId}/summary/s3
+Content-Type: multipart/form-data
+```
+
+### Descargar resumen desde S3
+
+```http
+GET /api/enrollments/{enrollmentId}/summary/s3
+```
+
+### Eliminar resumen desde S3
+
+```http
+DELETE /api/enrollments/{enrollmentId}/summary/s3
+```
+
+## Configuracion local
+
+Variables de entorno:
 
 ```bash
+PORT=8080
 DB_URL=jdbc:oracle:thin:@your-oracle-host:1521/your-service
 DB_USERNAME=your_user
 DB_PASSWORD=your_password
 DDL_AUTO=update
-PORT=8080
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your_bucket_name
+AWS_S3_SUMMARY_PREFIX=inscripciones
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
 ```
 
 Para Oracle Autonomous Database con wallet, use una URL como:
@@ -130,5 +147,10 @@ Secrets requeridos en GitHub:
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+- `AWS_REGION`
+- `AWS_S3_BUCKET`
+- `AWS_S3_SUMMARY_PREFIX`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 
-La instancia EC2 debe tener Docker instalado y permitir tráfico entrante al puerto `8080`.
+La instancia EC2 debe tener Docker instalado y permitir trafico entrante al puerto `8080`.

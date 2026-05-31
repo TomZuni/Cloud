@@ -19,6 +19,12 @@ spring:
         jdbc:
           time_zone: UTC
 
+aws:
+  region: ${AWS_REGION:us-east-1}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET:course-enrollment-summaries}
+    summary-prefix: ${AWS_S3_SUMMARY_PREFIX:inscripciones}
+
 management:
   endpoints:
     web:
