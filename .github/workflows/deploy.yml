@@ -79,7 +79,9 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api"
+          ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api/data && chmod 777 ~/course-enrollment-api/data"
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "cat > ~/course-enrollment-api/app.env" <<EOF
+          SPRING_PROFILES_ACTIVE=online
           DB_URL=${DB_URL}
           DB_USERNAME=${DB_USERNAME}
           DB_PASSWORD=${DB_PASSWORD}
@@ -101,6 +103,7 @@ jobs:
             --name "$CONTAINER_NAME" \
             --restart unless-stopped \
             --env-file ~/course-enrollment-api/app.env \
+            -v ~/course-enrollment-api/data:/data \
             -p 8080:8080 \
             "$IMAGE_REPOSITORY:$IMAGE_TAG"
           docker image prune -f
