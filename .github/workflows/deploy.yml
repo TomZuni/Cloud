@@ -76,6 +76,7 @@ jobs:
           AWS_S3_SUMMARY_PREFIX: ${{ secrets.AWS_S3_SUMMARY_PREFIX || 'inscripciones' }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api"
@@ -92,6 +93,7 @@ jobs:
           AWS_S3_SUMMARY_PREFIX=${AWS_S3_SUMMARY_PREFIX}
           AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
           AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+          AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
           EOF
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" <<EOF
           set -euo pipefail
