@@ -59,6 +59,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ForbiddenOperationException.class)
+    public ResponseEntity<ApiErrorResponse> handleForbidden(
+            ForbiddenOperationException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.FORBIDDEN,
+                exception.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        );
+    }
+
     @ExceptionHandler(StorageOperationException.class)
     public ResponseEntity<ApiErrorResponse> handleStorageOperation(
             StorageOperationException exception,

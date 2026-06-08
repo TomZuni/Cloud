@@ -25,6 +25,10 @@ aws:
     bucket-name: ${AWS_S3_BUCKET:course-enrollment-summaries}
     summary-prefix: ${AWS_S3_SUMMARY_PREFIX:inscripciones}
 
+dispatch-guides:
+  efs-path: ${EFS_MOUNT_PATH:/mnt/efs}/dispatch-guides
+  s3-prefix: ${AWS_S3_GUIDE_PREFIX:guias}
+
 management:
   endpoints:
     web:

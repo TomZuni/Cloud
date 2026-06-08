@@ -74,6 +74,7 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_S3_SUMMARY_PREFIX: ${{ secrets.AWS_S3_SUMMARY_PREFIX || 'inscripciones' }}
+          AWS_S3_GUIDE_PREFIX: ${{ secrets.AWS_S3_GUIDE_PREFIX || 'guias' }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
@@ -81,6 +82,7 @@ jobs:
           set -euo pipefail
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api"
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api/data && chmod 777 ~/course-enrollment-api/data"
+          ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api/efs && chmod 777 ~/course-enrollment-api/efs"
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "cat > ~/course-enrollment-api/app.env" <<EOF
           SPRING_PROFILES_ACTIVE=online
           DB_URL=${DB_URL}
@@ -91,9 +93,11 @@ jobs:
           AWS_REGION=${AWS_REGION}
           AWS_S3_BUCKET=${AWS_S3_BUCKET}
           AWS_S3_SUMMARY_PREFIX=${AWS_S3_SUMMARY_PREFIX}
+          AWS_S3_GUIDE_PREFIX=${AWS_S3_GUIDE_PREFIX}
           AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
           AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
           AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+          EFS_MOUNT_PATH=/mnt/efs
           EOF
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" <<EOF
           set -euo pipefail
@@ -106,6 +110,7 @@ jobs:
             --restart unless-stopped \
             --env-file ~/course-enrollment-api/app.env \
             -v ~/course-enrollment-api/data:/data \
+            -v ~/course-enrollment-api/efs:/mnt/efs \
             -p 8080:8080 \
             "$IMAGE_REPOSITORY:$IMAGE_TAG"
           docker image prune -f
