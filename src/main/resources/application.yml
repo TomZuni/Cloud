@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: course-enrollment-api
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AZURE_AD_ISSUER_URI:}
   datasource:
     url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/FREEPDB1}
     username: ${DB_USERNAME:system}
@@ -28,6 +33,11 @@ aws:
 dispatch-guides:
   efs-path: ${EFS_MOUNT_PATH:/mnt/efs}/dispatch-guides
   s3-prefix: ${AWS_S3_GUIDE_PREFIX:guias}
+
+app:
+  security:
+    jwt-validation-enabled: ${JWT_VALIDATION_ENABLED:false}
+    allowed-audiences: "${AZURE_AD_ALLOWED_AUDIENCES:${AZURE_AD_AUDIENCE:}}"
 
 management:
   endpoints:

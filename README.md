@@ -1,120 +1,29 @@
 # Course Enrollment API
 
-Microservicio Spring Boot para administrar cursos virtuales, inscripciones y archivos de resumen almacenados en AWS S3.
-Tambien incluye un modulo de gestion de pedidos y generacion de guias de despacho para una solucion Cloud Native.
+Microservicio Spring Boot para la actividad formativa de Semana 4: sistema de inscripcion de cursos virtuales, generacion de resumen fisico, administracion del resumen en AWS S3, exposicion mediante AWS API Gateway y autenticacion con JWT emitido por Azure/Entra ID.
 
-## Funcionalidades
+## Alcance de esta entrega
 
-- Consulta de cursos disponibles con nombre, instructor, duracion y costo.
-- Creacion de nuevos cursos con persistencia en Oracle Cloud.
-- Inscripcion de estudiantes en uno o mas cursos.
-- Resumen de inscripcion con cursos seleccionados, costo por curso y total a pagar.
-- Generacion del resumen como archivo descargable.
-- Carga del resumen generado a un bucket S3.
-- Reemplazo, descarga y eliminacion del resumen almacenado en S3.
-- Imagen Docker generada y publicada automaticamente en Docker Hub al hacer push a `main`.
-- Despliegue automatico de la imagen en una instancia EC2.
-- Creacion de guias de despacho en PDF.
-- Almacenamiento temporal de guias en una ruta montable como EFS.
-- Subida, descarga, actualizacion, eliminacion y busqueda historica de guias en AWS S3.
+Esta rama queda enfocada en el caso educativo solicitado en la pauta:
 
-## Endpoints de guias de despacho
+- Consultar cursos disponibles.
+- Crear cursos.
+- Inscribir estudiantes en uno o mas cursos.
+- Generar un archivo fisico con el resumen de la inscripcion.
+- Subir el resumen generado a S3 en una carpeta con el numero de inscripcion.
+- Reemplazar, descargar y borrar el resumen almacenado en S3.
+- Exponer los endpoints por AWS API Gateway.
+- Proteger las rutas del API Gateway con un autorizador JWT de Azure/Entra ID.
 
-### Crear guia de despacho
+El modulo de guias de despacho queda separado en el perfil Spring `dispatch-guides`, por lo que no se publica en la entrega normal de Semana 4.
 
-Genera el registro y crea el PDF temporal en la ruta EFS configurada.
+## Endpoints principales
 
-```http
-POST /api/dispatch-guides
-Content-Type: application/json
-```
-
-```json
-{
-  "orderNumber": "PED-1001",
-  "carrierName": "Transportista Tomas",
-  "carrierRut": "12.345.678-9",
-  "recipientName": "Camila Perez",
-  "originAddress": "Bodega Central, Santiago",
-  "destinationAddress": "Av. Siempre Viva 742, Valparaiso",
-  "packageDescription": "3 cajas con materiales de oficina",
-  "dispatchDate": "2026-06-08"
-}
-```
-
-La respuesta incluye `accessCode`, requerido para descargar desde S3.
-
-### Consultar guias
-
-```http
-GET /api/dispatch-guides
-GET /api/dispatch-guides?carrierName=Transportista&dispatchDate=2026-06-08
-GET /api/dispatch-guides/{guideId}
-```
-
-### Descargar guia temporal desde EFS
-
-```http
-GET /api/dispatch-guides/{guideId}/efs
-```
-
-### Subir guia generada a S3
-
-```http
-POST /api/dispatch-guides/{guideId}/s3
-```
-
-Las guias quedan organizadas por fecha y transportista:
-
-```text
-guias/2026-06-08/transportista-tomas/guia-despacho-1.pdf
-```
-
-### Descargar guia desde S3 con validacion
-
-```http
-GET /api/dispatch-guides/{guideId}/s3?accessCode={accessCode}
-```
-
-### Actualizar guia
-
-Regenera el PDF temporal. Si la guia ya estaba subida a S3, tambien reemplaza el objeto almacenado.
-
-```http
-PUT /api/dispatch-guides/{guideId}
-Content-Type: application/json
-```
-
-```json
-{
-  "orderNumber": "PED-1001-A",
-  "carrierName": "Transportista Tomas",
-  "carrierRut": "12.345.678-9",
-  "recipientName": "Camila Perez",
-  "originAddress": "Bodega Central, Santiago",
-  "destinationAddress": "Av. Siempre Viva 742, Valparaiso",
-  "packageDescription": "3 cajas y 1 sobre con documentos",
-  "dispatchDate": "2026-06-08"
-}
-```
-
-### Eliminar guia
-
-Elimina el registro, el archivo temporal y el objeto S3 si existe.
-
-```http
-DELETE /api/dispatch-guides/{guideId}
-```
-
-## Endpoints de cursos e inscripciones
-
-### Listar cursos
+### Cursos
 
 ```http
 GET /api/courses
 ```
-
-### Crear curso
 
 ```http
 POST /api/courses
@@ -130,7 +39,7 @@ Content-Type: application/json
 }
 ```
 
-### Inscribir estudiante
+### Inscripciones
 
 ```http
 POST /api/enrollments
@@ -147,7 +56,7 @@ Content-Type: application/json
 
 ### Descargar resumen generado
 
-Genera el archivo fisico del resumen para guardarlo desde Postman o el navegador.
+Genera el archivo fisico para guardarlo desde Postman o navegador.
 
 ```http
 GET /api/enrollments/{enrollmentId}/summary
@@ -165,7 +74,7 @@ resumen-inscripcion-{enrollmentId}.txt
 POST /api/enrollments/{enrollmentId}/summary/s3
 ```
 
-El archivo queda guardado con esta jerarquia:
+Ruta del objeto en S3:
 
 ```text
 inscripciones/{enrollmentId}/resumen-inscripcion-{enrollmentId}.txt
@@ -192,11 +101,59 @@ GET /api/enrollments/{enrollmentId}/summary/s3
 DELETE /api/enrollments/{enrollmentId}/summary/s3
 ```
 
+## Autenticacion con Azure/Entra ID y AWS API Gateway
+
+La autenticacion principal se realiza en AWS API Gateway mediante un autorizador JWT:
+
+- Identity source: `$request.header.Authorization`
+- Issuer: `https://login.microsoftonline.com/{tenant-id}/v2.0`
+- Audience: el `aud` real del access token, normalmente el Client ID de la API o su Application ID URI.
+
+En Postman, el token debe enviarse como:
+
+```http
+Authorization: Bearer {access_token}
+```
+
+Para Client Credentials en Entra ID, usa el endpoint del tenant, no `common`:
+
+```text
+https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token
+```
+
+Y un scope con `/.default`, por ejemplo:
+
+```text
+api://{api-client-id}/.default
+```
+
+o:
+
+```text
+{application-id-uri}/.default
+```
+
+Si `/api/courses` responde `401` con token, revisar en este orden:
+
+1. El route exacto `GET /api/courses` tiene asociado el JWT authorizer.
+2. El audience configurado en API Gateway coincide exactamente con el claim `aud` del token.
+3. El issuer configurado en API Gateway coincide exactamente con el claim `iss`.
+4. Postman envia el token en `Request Headers` con prefix `Bearer`.
+5. Si `JWT_VALIDATION_ENABLED=true`, Spring tambien debe tener el mismo issuer y audience.
+
+Por defecto, Spring no aplica una segunda validacion JWT para evitar el `401` por Basic Auth cuando la proteccion ya esta en API Gateway. Si se quiere doble validacion en backend, configurar:
+
+```env
+JWT_VALIDATION_ENABLED=true
+AZURE_AD_ISSUER_URI=https://login.microsoftonline.com/{tenant-id}/v2.0
+AZURE_AD_ALLOWED_AUDIENCES=api://{api-client-id},{api-client-id}
+```
+
 ## Configuracion local
 
 Variables de entorno:
 
-```bash
+```env
 PORT=8080
 DB_URL=jdbc:oracle:thin:@your-oracle-host:1521/your-service
 DB_USERNAME=your_user
@@ -205,20 +162,19 @@ DDL_AUTO=update
 AWS_REGION=us-east-1
 AWS_S3_BUCKET=your_bucket_name
 AWS_S3_SUMMARY_PREFIX=inscripciones
-AWS_S3_GUIDE_PREFIX=guias
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_SESSION_TOKEN=your_session_token_if_using_academy_or_voclabs
-EFS_MOUNT_PATH=/mnt/efs
+JWT_VALIDATION_ENABLED=false
 ```
 
-Para Oracle Autonomous Database con wallet, use una URL como:
+Para Oracle Autonomous Database con wallet, usar una URL como:
 
-```bash
+```env
 DB_URL=jdbc:oracle:thin:@mydb_high?TNS_ADMIN=/opt/oracle/wallet
 ```
 
-En ese caso, monte el wallet en el contenedor en `/opt/oracle/wallet`.
+En ese caso, montar el wallet en el contenedor en `/opt/oracle/wallet`.
 
 ## Ejecutar con Docker
 
@@ -229,7 +185,7 @@ docker run --rm -p 8080:8080 --env-file .env course-enrollment-api
 
 ## CI/CD
 
-El workflow `.github/workflows/deploy.yml` se ejecuta con cada push a `main`.
+El workflow `.github/workflows/deploy.yml` ejecuta pruebas, genera la imagen Docker, la publica en Docker Hub y la despliega en EC2.
 
 Secrets requeridos en GitHub:
 
@@ -245,13 +201,21 @@ Secrets requeridos en GitHub:
 - `AWS_REGION`
 - `AWS_S3_BUCKET`
 - `AWS_S3_SUMMARY_PREFIX`
-- `AWS_S3_GUIDE_PREFIX`
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
-- `AWS_SESSION_TOKEN` si usas credenciales temporales de AWS Academy o VocLabs
-- `EFS_MOUNT_PATH` opcional, usa `/mnt/efs` en Docker
+- `AWS_SESSION_TOKEN` si usas credenciales temporales
+- `JWT_VALIDATION_ENABLED` opcional, recomendado `false` si API Gateway valida el JWT
+- `AZURE_AD_ISSUER_URI` opcional, requerido si `JWT_VALIDATION_ENABLED=true`
+- `AZURE_AD_ALLOWED_AUDIENCES` opcional, requerido si `JWT_VALIDATION_ENABLED=true`
 
-El workflow monta `~/course-enrollment-api/efs` dentro del contenedor como `/mnt/efs`.
-Para usar EFS real, monta el filesystem EFS en esa ruta de la instancia EC2 antes del despliegue.
+## Modulo opcional de guias de despacho
 
-La instancia EC2 debe tener Docker instalado y permitir trafico entrante al puerto `8080`.
+Las guias de despacho pertenecen a otro alcance. Para activarlas manualmente:
+
+```env
+SPRING_PROFILES_ACTIVE=online,dispatch-guides
+AWS_S3_GUIDE_PREFIX=guias
+EFS_MOUNT_PATH=/mnt/efs
+```
+
+En la entrega de Semana 4 se debe mantener solamente `SPRING_PROFILES_ACTIVE=online`.
