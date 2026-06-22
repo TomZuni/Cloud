@@ -9,6 +9,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AZURE_AD_ISSUER_URI:}
+          jwk-set-uri: ${AZURE_AD_JWK_SET_URI:}
   datasource:
     url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/FREEPDB1}
     username: ${DB_USERNAME:system}
@@ -38,6 +39,7 @@ app:
   security:
     jwt-validation-enabled: ${JWT_VALIDATION_ENABLED:false}
     allowed-audiences: "${AZURE_AD_ALLOWED_AUDIENCES:${AZURE_AD_AUDIENCE:}}"
+    allowed-policies: "${AZURE_AD_ALLOWED_POLICIES:}"
 
 management:
   endpoints:

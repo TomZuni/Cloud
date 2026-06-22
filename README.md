@@ -101,13 +101,31 @@ GET /api/enrollments/{enrollmentId}/summary/s3
 DELETE /api/enrollments/{enrollmentId}/summary/s3
 ```
 
-## Autenticacion con Azure/Entra ID y AWS API Gateway
+## Autenticacion con Azure AD B2C, Entra ID y AWS API Gateway
 
 La autenticacion principal se realiza en AWS API Gateway mediante un autorizador JWT:
 
 - Identity source: `$request.header.Authorization`
-- Issuer: `https://login.microsoftonline.com/{tenant-id}/v2.0`
-- Audience: el `aud` real del access token, normalmente el Client ID de la API o su Application ID URI.
+- Issuer: el valor exacto del claim `iss` del token.
+- Audience: el valor exacto del claim `aud` del token, normalmente el Client ID de la API o su Application ID URI.
+
+Para el flujo nuevo de Azure AD B2C, el issuer debe usar `b2clogin.com`:
+
+```text
+https://{tenant-name}.b2clogin.com/{tenant-id}/v2.0/
+```
+
+El metadata endpoint de cada flujo de usuario se obtiene con el tenant y la policy:
+
+```text
+https://{tenant-name}.b2clogin.com/{tenant-name}.onmicrosoft.com/{policy}/v2.0/.well-known/openid-configuration
+```
+
+Desde ese JSON se toma el `jwks_uri`, por ejemplo:
+
+```text
+https://{tenant-name}.b2clogin.com/{tenant-name}.onmicrosoft.com/{policy}/discovery/v2.0/keys
+```
 
 En Postman, el token debe enviarse como:
 
@@ -115,7 +133,7 @@ En Postman, el token debe enviarse como:
 Authorization: Bearer {access_token}
 ```
 
-Para Client Credentials en Entra ID, usa el endpoint del tenant, no `common`:
+Para Entra ID clasico con Client Credentials, usa el endpoint del tenant, no `common`:
 
 ```text
 https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token
@@ -139,14 +157,25 @@ Si `/api/courses` responde `401` con token, revisar en este orden:
 2. El audience configurado en API Gateway coincide exactamente con el claim `aud` del token.
 3. El issuer configurado en API Gateway coincide exactamente con el claim `iss`.
 4. Postman envia el token en `Request Headers` con prefix `Bearer`.
-5. Si `JWT_VALIDATION_ENABLED=true`, Spring tambien debe tener el mismo issuer y audience.
+5. Si usas Azure AD B2C, el metadata endpoint y el `jwks_uri` corresponden al mismo flujo de usuario.
+6. Si `JWT_VALIDATION_ENABLED=true`, Spring tambien debe tener el mismo issuer, audience y policy.
 
-Por defecto, Spring no aplica una segunda validacion JWT para evitar el `401` por Basic Auth cuando la proteccion ya esta en API Gateway. Si se quiere doble validacion en backend, configurar:
+Para cumplir la Semana 5, el despliegue deja la validacion JWT de Spring Security activada por defecto desde GitHub Actions. Configura estos secrets:
 
 ```env
 JWT_VALIDATION_ENABLED=true
 AZURE_AD_ISSUER_URI=https://login.microsoftonline.com/{tenant-id}/v2.0
 AZURE_AD_ALLOWED_AUDIENCES=api://{api-client-id},{api-client-id}
+```
+
+Para Azure AD B2C con flujo de usuario:
+
+```env
+JWT_VALIDATION_ENABLED=true
+AZURE_AD_ISSUER_URI=https://{tenant-name}.b2clogin.com/{tenant-id}/v2.0/
+AZURE_AD_JWK_SET_URI=https://{tenant-name}.b2clogin.com/{tenant-name}.onmicrosoft.com/{policy}/discovery/v2.0/keys
+AZURE_AD_ALLOWED_AUDIENCES={api-client-id}
+AZURE_AD_ALLOWED_POLICIES={policy}
 ```
 
 ## Configuracion local
@@ -165,7 +194,11 @@ AWS_S3_SUMMARY_PREFIX=inscripciones
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_SESSION_TOKEN=your_session_token_if_using_academy_or_voclabs
-JWT_VALIDATION_ENABLED=false
+JWT_VALIDATION_ENABLED=true
+AZURE_AD_ISSUER_URI=https://your-issuer
+AZURE_AD_JWK_SET_URI=https://your-jwks-uri
+AZURE_AD_ALLOWED_AUDIENCES=your-api-client-id
+AZURE_AD_ALLOWED_POLICIES=B2C_1_your_flow
 ```
 
 Para Oracle Autonomous Database con wallet, usar una URL como:
@@ -204,9 +237,11 @@ Secrets requeridos en GitHub:
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_SESSION_TOKEN` si usas credenciales temporales
-- `JWT_VALIDATION_ENABLED` opcional, recomendado `false` si API Gateway valida el JWT
-- `AZURE_AD_ISSUER_URI` opcional, requerido si `JWT_VALIDATION_ENABLED=true`
-- `AZURE_AD_ALLOWED_AUDIENCES` opcional, requerido si `JWT_VALIDATION_ENABLED=true`
+- `JWT_VALIDATION_ENABLED` opcional, por defecto `true` en el workflow para cumplir Semana 5
+- `AZURE_AD_ISSUER_URI` requerido si `JWT_VALIDATION_ENABLED=true`
+- `AZURE_AD_JWK_SET_URI` opcional para Entra ID clasico; recomendado para Azure AD B2C
+- `AZURE_AD_ALLOWED_AUDIENCES` requerido si `JWT_VALIDATION_ENABLED=true`
+- `AZURE_AD_ALLOWED_POLICIES` opcional; recomendado para validar el flujo de usuario B2C
 
 ## Modulo opcional de guias de despacho
 
