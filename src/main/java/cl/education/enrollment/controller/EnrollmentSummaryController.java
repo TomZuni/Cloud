@@ -5,6 +5,7 @@ import cl.education.enrollment.dto.StoredFileResponse;
 import cl.education.enrollment.service.EnrollmentSummaryFileService;
 import cl.education.enrollment.service.EnrollmentSummaryStorageService;
 import java.nio.charset.StandardCharsets;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@Profile("!dispatch-guides")
 @RequestMapping("/api/enrollments")
 public class EnrollmentSummaryController {
 

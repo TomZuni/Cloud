@@ -1,0 +1,322 @@
+{
+  "info": {
+    "name": "Sumativa 2 - Guias de despacho",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://your-api-gateway-url"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "guide_id",
+      "value": ""
+    },
+    {
+      "key": "access_code",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Crear guia",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderNumber\": \"PED-2026-0001\",\n  \"carrierName\": \"Transportes Andina\",\n  \"carrierRut\": \"76.123.456-7\",\n  \"recipientName\": \"Comercial Los Aromos\",\n  \"originAddress\": \"Av. Apoquindo 4501, Las Condes\",\n  \"destinationAddress\": \"Camino Industrial 1200, Rancagua\",\n  \"packageDescription\": \"12 cajas selladas con repuestos mecanicos, peso aproximado 180 kg, retiro contra orden PED-2026-0001.\",\n  \"dispatchDate\": \"2026-06-29\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  const body = pm.response.json();",
+              "  pm.collectionVariables.set('guide_id', body.id);",
+              "  pm.collectionVariables.set('access_code', body.accessCode);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Subir guia a S3",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}/s3",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}",
+            "s3"
+          ]
+        }
+      }
+    },
+    {
+      "name": "03 - Descargar guia desde S3",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}/s3?accessCode={{access_code}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}",
+            "s3"
+          ],
+          "query": [
+            {
+              "key": "accessCode",
+              "value": "{{access_code}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "04 - Consultar por transportista y fecha",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides?carrierName=Transportes%20Andina&dispatchDate=2026-06-29",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides"
+          ],
+          "query": [
+            {
+              "key": "carrierName",
+              "value": "Transportes Andina"
+            },
+            {
+              "key": "dispatchDate",
+              "value": "2026-06-29"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "05 - Actualizar guia",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderNumber\": \"PED-2026-0001-ACT\",\n  \"carrierName\": \"Transportes Cordillera\",\n  \"carrierRut\": \"76.123.456-7\",\n  \"recipientName\": \"Comercial Los Aromos\",\n  \"originAddress\": \"Av. Apoquindo 4501, Las Condes\",\n  \"destinationAddress\": \"Ruta 5 Sur Km 85, Rancagua\",\n  \"packageDescription\": \"12 cajas selladas con repuestos mecanicos y una caja adicional de herramientas, peso aproximado 210 kg.\",\n  \"dispatchDate\": \"2026-06-29\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "06 - Ver detalle de guia",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "07 - Descargar guia temporal EFS",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}/efs",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}",
+            "efs"
+          ]
+        }
+      }
+    },
+    {
+      "name": "08 - Seguridad negativa sin JWT",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "09 - Seguridad negativa JWT alterado",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}x"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "10 - Eliminar guia",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "11 - Validar guia eliminada",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dispatch-guides/{{guide_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "dispatch-guides",
+            "{{guide_id}}"
+          ]
+        }
+      }
+    }
+  ]
+}

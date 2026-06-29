@@ -83,6 +83,8 @@ jobs:
           AZURE_AD_JWK_SET_URI: ${{ secrets.AZURE_AD_JWK_SET_URI }}
           AZURE_AD_ALLOWED_AUDIENCES: ${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }}
           AZURE_AD_ALLOWED_POLICIES: ${{ secrets.AZURE_AD_ALLOWED_POLICIES }}
+          APP_SECURITY_DOWNLOAD_AUTHORITIES: ${{ secrets.APP_SECURITY_DOWNLOAD_AUTHORITIES || 'SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD' }}
+          APP_SECURITY_MANAGE_AUTHORITIES: ${{ secrets.APP_SECURITY_MANAGE_AUTHORITIES || 'SCOPE_guides.manage,ROLE_GUIDES_MANAGE' }}
         run: |
           set -euo pipefail
           if [ "$JWT_VALIDATION_ENABLED" = "true" ]; then
@@ -93,7 +95,7 @@ jobs:
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api/data && chmod 777 ~/course-enrollment-api/data"
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "mkdir -p ~/course-enrollment-api/efs && chmod 777 ~/course-enrollment-api/efs"
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" "cat > ~/course-enrollment-api/app.env" <<EOF
-          SPRING_PROFILES_ACTIVE=online
+          SPRING_PROFILES_ACTIVE=online,dispatch-guides
           DB_URL=${DB_URL}
           DB_USERNAME=${DB_USERNAME}
           DB_PASSWORD=${DB_PASSWORD}
@@ -112,6 +114,8 @@ jobs:
           AZURE_AD_JWK_SET_URI=${AZURE_AD_JWK_SET_URI}
           AZURE_AD_ALLOWED_AUDIENCES=${AZURE_AD_ALLOWED_AUDIENCES}
           AZURE_AD_ALLOWED_POLICIES=${AZURE_AD_ALLOWED_POLICIES}
+          APP_SECURITY_DOWNLOAD_AUTHORITIES=${APP_SECURITY_DOWNLOAD_AUTHORITIES}
+          APP_SECURITY_MANAGE_AUTHORITIES=${APP_SECURITY_MANAGE_AUTHORITIES}
           EOF
           ssh -i ~/.ssh/ec2_key -p "$EC2_PORT" "$EC2_USER@$EC2_HOST" <<EOF
           set -euo pipefail

@@ -8,10 +8,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -29,16 +32,26 @@ public class SecurityConfig {
             name = "app.security.jwt-validation-enabled",
             havingValue = "true"
     )
-    public SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain jwtSecurityFilterChain(
+            HttpSecurity http,
+            @Value("${app.security.download-authorities:SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD}") String downloadAuthorities,
+            @Value("${app.security.manage-authorities:SCOPE_guides.manage,ROLE_GUIDES_MANAGE}") String manageAuthorities
+    ) throws Exception {
+        String[] downloadOrManage = mergeAuthorities(downloadAuthorities, manageAuthorities);
+        String[] manageOnly = toAuthorityArray(manageAuthorities);
+
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/dispatch-guides/*/efs").hasAnyAuthority(downloadOrManage)
+                        .requestMatchers(HttpMethod.GET, "/api/dispatch-guides/*/s3").hasAnyAuthority(downloadOrManage)
+                        .requestMatchers("/api/dispatch-guides/**").hasAnyAuthority(manageOnly)
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
 
@@ -61,8 +74,8 @@ public class SecurityConfig {
             havingValue = "true"
     )
     public NimbusJwtDecoder jwtDecoder(
-            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") String issuerUri,
-            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") String jwkSetUri,
+            @Value("${app.security.issuer-uri:}") String issuerUri,
+            @Value("${app.security.jwk-set-uri:}") String jwkSetUri,
             @Value("${app.security.allowed-audiences:}") String allowedAudiences,
             @Value("${app.security.allowed-policies:}") String allowedPolicies
     ) {
@@ -104,6 +117,41 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(item -> !item.isBlank())
                 .toList();
+    }
+
+    private String[] toAuthorityArray(String value) {
+        return parseValues(value).toArray(String[]::new);
+    }
+
+    private String[] mergeAuthorities(String first, String second) {
+        List<String> authorities = new ArrayList<>();
+        authorities.addAll(parseValues(first));
+        authorities.addAll(parseValues(second));
+        return authorities.stream()
+                .distinct()
+                .toArray(String[]::new);
+    }
+
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            List<GrantedAuthority> authorities = new ArrayList<>(scopeConverter.convert(jwt));
+
+            List<String> roles = jwt.getClaimAsStringList("roles");
+            if (roles != null) {
+                roles.stream()
+                        .filter(this::hasText)
+                        .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                        .map(SimpleGrantedAuthority::new)
+                        .forEach(authorities::add);
+            }
+
+            return authorities;
+        });
+
+        return converter;
     }
 
     private record AudienceValidator(List<String> allowedAudiences) implements OAuth2TokenValidator<Jwt> {
