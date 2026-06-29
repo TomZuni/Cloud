@@ -98,7 +98,3 @@ Los objetos S3 se guardan con esta estructura:
 ```text
 guias/{fecha-despacho}/{transportista}/guia-despacho-{id}.pdf
 ```
-
-## Video de evaluacion
-
-Usar [SUMATIVA2_PRUEBA_VIDEO.md](SUMATIVA2_PRUEBA_VIDEO.md) como checklist. El video debe mostrar pruebas en vivo desde Postman usando API Gateway, evidenciar `JWT Auth`, obtener el token desde IDaaS y mostrar en S3 los cambios despues de crear, subir, actualizar y eliminar guias.
