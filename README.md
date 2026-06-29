@@ -9,7 +9,7 @@ Microservicio Spring Boot para la Sumativa 2 de Desarrollo Cloud Native. La solu
 - Integracion con Azure AD B2C/IDaaS para emision de tokens JWT.
 - Dos permisos de acceso:
   - descarga: `guides.download` o rol `GUIDES_DOWNLOAD`.
-  - administracion: `guides.manage` o rol `GUIDES_MANAGE`.
+  - administracion: `guides.manage`, `access_as_user`, `user_impersonation` o rol `GUIDES_MANAGE`.
 - Generacion de guias de despacho en PDF.
 - Almacenamiento temporal en EFS.
 - Subida, descarga, actualizacion y eliminacion de documentos en S3.
@@ -76,7 +76,7 @@ AZURE_AD_JWK_SET_URI=https://your-tenant.b2clogin.com/your-tenant.onmicrosoft.co
 AZURE_AD_ALLOWED_AUDIENCES=your-api-client-id
 AZURE_AD_ALLOWED_POLICIES=B2C_1_your_flow
 APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD
-APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,ROLE_GUIDES_MANAGE
+APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE
 ```
 
 El token puede traer permisos como scopes (`scp`/`scope`) o roles (`roles`). Spring acepta ambos formatos.

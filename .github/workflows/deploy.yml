@@ -84,7 +84,7 @@ jobs:
           AZURE_AD_ALLOWED_AUDIENCES: ${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }}
           AZURE_AD_ALLOWED_POLICIES: ${{ secrets.AZURE_AD_ALLOWED_POLICIES }}
           APP_SECURITY_DOWNLOAD_AUTHORITIES: ${{ secrets.APP_SECURITY_DOWNLOAD_AUTHORITIES || 'SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD' }}
-          APP_SECURITY_MANAGE_AUTHORITIES: ${{ secrets.APP_SECURITY_MANAGE_AUTHORITIES || 'SCOPE_guides.manage,ROLE_GUIDES_MANAGE' }}
+          APP_SECURITY_MANAGE_AUTHORITIES: ${{ secrets.APP_SECURITY_MANAGE_AUTHORITIES || 'SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE' }}
         run: |
           set -euo pipefail
           if [ "$JWT_VALIDATION_ENABLED" = "true" ]; then

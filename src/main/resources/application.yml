@@ -37,7 +37,7 @@ app:
     allowed-audiences: "${AZURE_AD_ALLOWED_AUDIENCES:${AZURE_AD_AUDIENCE:}}"
     allowed-policies: "${AZURE_AD_ALLOWED_POLICIES:}"
     download-authorities: "${APP_SECURITY_DOWNLOAD_AUTHORITIES:SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD}"
-    manage-authorities: "${APP_SECURITY_MANAGE_AUTHORITIES:SCOPE_guides.manage,ROLE_GUIDES_MANAGE}"
+    manage-authorities: "${APP_SECURITY_MANAGE_AUTHORITIES:SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE}"
 
 management:
   endpoints:
