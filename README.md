@@ -17,6 +17,11 @@ Microservicio Spring Boot para la Sumativa 2 de Desarrollo Cloud Native. La solu
 
 Los controladores antiguos de cursos e inscripciones quedan desactivados cuando se despliega con el perfil `dispatch-guides`, para mantener separada esta sumativa de actividades formativas anteriores.
 
+## Documentacion para la sumativa
+
+- [Paso a paso completo](docs/sumativa2-paso-a-paso.md)
+- [Checklist de entrega](docs/checklist-entrega.md)
+
 ## Perfil de ejecucion
 
 Para esta entrega se debe usar:
