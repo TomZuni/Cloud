@@ -1,0 +1,53 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: ms-guias-consumidor
+  datasource:
+    url: jdbc:h2:file:${H2_DB_PATH:./data/guias_despacho};MODE=Oracle;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          time_zone: UTC
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+aws:
+  region: ${AWS_REGION:us-east-1}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET:guias-despacho-bucket}
+
+dispatch-guides:
+  s3-prefix: ${AWS_S3_GUIDE_PREFIX:guias}
+
+app:
+  security:
+    jwt-validation-enabled: ${JWT_VALIDATION_ENABLED:false}
+    issuer-uri: "${AZURE_AD_ISSUER_URI:}"
+    jwk-set-uri: "${AZURE_AD_JWK_SET_URI:}"
+    allowed-audiences: "${AZURE_AD_ALLOWED_AUDIENCES:${AZURE_AD_AUDIENCE:}}"
+    allowed-policies: "${AZURE_AD_ALLOWED_POLICIES:}"
+    download-authorities: "${APP_SECURITY_DOWNLOAD_AUTHORITIES:SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD}"
+    manage-authorities: "${APP_SECURITY_MANAGE_AUTHORITIES:SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
