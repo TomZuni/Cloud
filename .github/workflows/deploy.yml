@@ -1,0 +1,139 @@
+name: Build and Deploy Guias Despacho (Productor + Consumidor)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - { path: ms-productor,   image: ms-productor-guias }
+          - { path: ms-consumidor,  image: ms-consumidor-guias }
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Login en Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build y push - ${{ matrix.service.image }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service.path }}
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service.image }}:latest
+
+  deploy-to-ec2:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Crear carpeta remota
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          script: mkdir -p ~/guias-despacho/data ~/guias-despacho/efs
+
+      - name: Copiar docker-compose.yml (cluster RabbitMQ)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          source: "docker-compose.yml"
+          target: "~/guias-despacho"
+
+      - name: Levantar cluster RabbitMQ y desplegar ambos microservicios
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          script: |
+            cd ~/guias-despacho
+            docker compose up -d
+
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+            echo "--- Eliminando contenedores previos (si existen) ---"
+            for NAME in ms-productor-guias ms-consumidor-guias; do
+              if [ -n "$(docker ps -aq -f name=^${NAME}$)" ]; then
+                docker rm -f "$NAME"
+              fi
+            done
+
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ms-productor-guias:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ms-consumidor-guias:latest
+
+            echo "--- Levantando ms-productor-guias (puerto 8080) ---"
+            docker run -d \
+              --name ms-productor-guias \
+              --restart unless-stopped \
+              --network rabbitmq_net \
+              -e PORT=8080 \
+              -e H2_DB_PATH=/data/guias_despacho \
+              -e DDL_AUTO=update \
+              -e AWS_REGION=${{ secrets.AWS_REGION }} \
+              -e AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }} \
+              -e AWS_S3_GUIDE_PREFIX=guias \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }} \
+              -e EFS_MOUNT_PATH=/mnt/efs \
+              -e RABBITMQ_HOST=rabbitmq1 \
+              -e RABBITMQ_PORT=5672 \
+              -e RABBITMQ_USERNAME=guest \
+              -e RABBITMQ_PASSWORD=guest \
+              -e JWT_VALIDATION_ENABLED=${{ secrets.JWT_VALIDATION_ENABLED }} \
+              -e AZURE_AD_ISSUER_URI=${{ secrets.AZURE_AD_ISSUER_URI }} \
+              -e AZURE_AD_ALLOWED_AUDIENCES=${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }} \
+              -e APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD \
+              -e APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE \
+              -v ~/guias-despacho/data:/data \
+              -v ~/guias-despacho/efs:/mnt/efs \
+              -p 8080:8080 \
+              ${{ secrets.DOCKERHUB_USERNAME }}/ms-productor-guias:latest
+
+            echo "--- Levantando ms-consumidor-guias (puerto 8081) ---"
+            docker run -d \
+              --name ms-consumidor-guias \
+              --restart unless-stopped \
+              --network rabbitmq_net \
+              -e PORT=8081 \
+              -e H2_DB_PATH=/data/guias_despacho \
+              -e DDL_AUTO=update \
+              -e AWS_REGION=${{ secrets.AWS_REGION }} \
+              -e AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }} \
+              -e AWS_S3_GUIDE_PREFIX=guias \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }} \
+              -e RABBITMQ_HOST=rabbitmq1 \
+              -e RABBITMQ_PORT=5672 \
+              -e RABBITMQ_USERNAME=guest \
+              -e RABBITMQ_PASSWORD=guest \
+              -e JWT_VALIDATION_ENABLED=${{ secrets.JWT_VALIDATION_ENABLED }} \
+              -e AZURE_AD_ISSUER_URI=${{ secrets.AZURE_AD_ISSUER_URI }} \
+              -e AZURE_AD_ALLOWED_AUDIENCES=${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }} \
+              -e APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD \
+              -e APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE \
+              -v ~/guias-despacho/data:/data \
+              -p 8081:8081 \
+              ${{ secrets.DOCKERHUB_USERNAME }}/ms-consumidor-guias:latest
+
+            echo "--- Estado final ---"
+            docker ps
