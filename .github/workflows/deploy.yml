@@ -44,7 +44,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || '22' }}
-          script: mkdir -p ~/guias-despacho/data ~/guias-despacho/efs && chmod -R 777 ~/guias-despacho/data ~/guias-despacho/efs
+          script: mkdir -p ~/guias-despacho/data ~/guias-despacho/efs && sudo chmod -R 777 ~/guias-despacho/data ~/guias-despacho/efs
 
       - name: Copiar docker-compose.yml (cluster RabbitMQ)
         uses: appleboy/scp-action@v0.1.7
