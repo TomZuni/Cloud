@@ -44,7 +44,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || '22' }}
-          script: mkdir -p ~/guias-despacho/data ~/guias-despacho/efs && sudo chmod -R 777 ~/guias-despacho/data ~/guias-despacho/efs
+          script: mkdir -p ~/guias-despacho/efs && sudo chmod -R 777 ~/guias-despacho/efs
 
       - name: Copiar docker-compose.yml (cluster RabbitMQ)
         uses: appleboy/scp-action@v0.1.7
@@ -91,9 +91,9 @@ jobs:
             echo "--- Generando archivos .env (mas robusto que -e sueltos) ---"
             trim() { printf '%s' "$1" | tr -d '\r\n'; }
 
-            printf '%s\n' "PORT=8080" "H2_DB_PATH=/data/guias_despacho" "DDL_AUTO=update" "AWS_REGION=$(trim "${{ secrets.AWS_REGION }}")" "AWS_S3_BUCKET=$(trim "${{ secrets.AWS_S3_BUCKET }}")" "AWS_S3_GUIDE_PREFIX=guias" "AWS_ACCESS_KEY_ID=$(trim "${{ secrets.AWS_ACCESS_KEY_ID }}")" "AWS_SECRET_ACCESS_KEY=$(trim "${{ secrets.AWS_SECRET_ACCESS_KEY }}")" "AWS_SESSION_TOKEN=$(trim "${{ secrets.AWS_SESSION_TOKEN }}")" "EFS_MOUNT_PATH=/mnt/efs" "RABBITMQ_HOST=rabbitmq1" "RABBITMQ_PORT=5672" "RABBITMQ_USERNAME=guest" "RABBITMQ_PASSWORD=guest" "JWT_VALIDATION_ENABLED=$(trim "${{ secrets.JWT_VALIDATION_ENABLED }}")" "AZURE_AD_ISSUER_URI=$(trim "${{ secrets.AZURE_AD_ISSUER_URI }}")" "AZURE_AD_JWK_SET_URI=$(trim "${{ secrets.AZURE_AD_JWK_SET_URI }}")" "AZURE_AD_ALLOWED_AUDIENCES=$(trim "${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }}")" "AZURE_AD_ALLOWED_POLICIES=$(trim "${{ secrets.AZURE_AD_ALLOWED_POLICIES }}")" "APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD" "APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE" > ~/guias-despacho/productor.env
+            printf '%s\n' "PORT=8080" "H2_HOST=h2" "H2_PORT=1521" "H2_DB_NAME=guias_despacho" "DDL_AUTO=update" "AWS_REGION=$(trim "${{ secrets.AWS_REGION }}")" "AWS_S3_BUCKET=$(trim "${{ secrets.AWS_S3_BUCKET }}")" "AWS_S3_GUIDE_PREFIX=guias" "AWS_ACCESS_KEY_ID=$(trim "${{ secrets.AWS_ACCESS_KEY_ID }}")" "AWS_SECRET_ACCESS_KEY=$(trim "${{ secrets.AWS_SECRET_ACCESS_KEY }}")" "AWS_SESSION_TOKEN=$(trim "${{ secrets.AWS_SESSION_TOKEN }}")" "EFS_MOUNT_PATH=/mnt/efs" "RABBITMQ_HOST=rabbitmq1" "RABBITMQ_PORT=5672" "RABBITMQ_USERNAME=guest" "RABBITMQ_PASSWORD=guest" "JWT_VALIDATION_ENABLED=$(trim "${{ secrets.JWT_VALIDATION_ENABLED }}")" "AZURE_AD_ISSUER_URI=$(trim "${{ secrets.AZURE_AD_ISSUER_URI }}")" "AZURE_AD_JWK_SET_URI=$(trim "${{ secrets.AZURE_AD_JWK_SET_URI }}")" "AZURE_AD_ALLOWED_AUDIENCES=$(trim "${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }}")" "AZURE_AD_ALLOWED_POLICIES=$(trim "${{ secrets.AZURE_AD_ALLOWED_POLICIES }}")" "APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD" "APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE" > ~/guias-despacho/productor.env
 
-            printf '%s\n' "PORT=8081" "H2_DB_PATH=/data/guias_despacho" "DDL_AUTO=update" "AWS_REGION=$(trim "${{ secrets.AWS_REGION }}")" "AWS_S3_BUCKET=$(trim "${{ secrets.AWS_S3_BUCKET }}")" "AWS_S3_GUIDE_PREFIX=guias" "AWS_ACCESS_KEY_ID=$(trim "${{ secrets.AWS_ACCESS_KEY_ID }}")" "AWS_SECRET_ACCESS_KEY=$(trim "${{ secrets.AWS_SECRET_ACCESS_KEY }}")" "AWS_SESSION_TOKEN=$(trim "${{ secrets.AWS_SESSION_TOKEN }}")" "RABBITMQ_HOST=rabbitmq1" "RABBITMQ_PORT=5672" "RABBITMQ_USERNAME=guest" "RABBITMQ_PASSWORD=guest" "JWT_VALIDATION_ENABLED=$(trim "${{ secrets.JWT_VALIDATION_ENABLED }}")" "AZURE_AD_ISSUER_URI=$(trim "${{ secrets.AZURE_AD_ISSUER_URI }}")" "AZURE_AD_JWK_SET_URI=$(trim "${{ secrets.AZURE_AD_JWK_SET_URI }}")" "AZURE_AD_ALLOWED_AUDIENCES=$(trim "${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }}")" "AZURE_AD_ALLOWED_POLICIES=$(trim "${{ secrets.AZURE_AD_ALLOWED_POLICIES }}")" "APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD" "APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE" > ~/guias-despacho/consumidor.env
+            printf '%s\n' "PORT=8081" "H2_HOST=h2" "H2_PORT=1521" "H2_DB_NAME=guias_despacho" "DDL_AUTO=update" "AWS_REGION=$(trim "${{ secrets.AWS_REGION }}")" "AWS_S3_BUCKET=$(trim "${{ secrets.AWS_S3_BUCKET }}")" "AWS_S3_GUIDE_PREFIX=guias" "AWS_ACCESS_KEY_ID=$(trim "${{ secrets.AWS_ACCESS_KEY_ID }}")" "AWS_SECRET_ACCESS_KEY=$(trim "${{ secrets.AWS_SECRET_ACCESS_KEY }}")" "AWS_SESSION_TOKEN=$(trim "${{ secrets.AWS_SESSION_TOKEN }}")" "RABBITMQ_HOST=rabbitmq1" "RABBITMQ_PORT=5672" "RABBITMQ_USERNAME=guest" "RABBITMQ_PASSWORD=guest" "JWT_VALIDATION_ENABLED=$(trim "${{ secrets.JWT_VALIDATION_ENABLED }}")" "AZURE_AD_ISSUER_URI=$(trim "${{ secrets.AZURE_AD_ISSUER_URI }}")" "AZURE_AD_JWK_SET_URI=$(trim "${{ secrets.AZURE_AD_JWK_SET_URI }}")" "AZURE_AD_ALLOWED_AUDIENCES=$(trim "${{ secrets.AZURE_AD_ALLOWED_AUDIENCES }}")" "AZURE_AD_ALLOWED_POLICIES=$(trim "${{ secrets.AZURE_AD_ALLOWED_POLICIES }}")" "APP_SECURITY_DOWNLOAD_AUTHORITIES=SCOPE_guides.download,ROLE_GUIDES_DOWNLOAD" "APP_SECURITY_MANAGE_AUTHORITIES=SCOPE_guides.manage,SCOPE_access_as_user,SCOPE_user_impersonation,ROLE_GUIDES_MANAGE" > ~/guias-despacho/consumidor.env
 
             echo "--- Levantando ms-productor-guias (puerto 8080) ---"
             docker run -d \
@@ -101,7 +101,6 @@ jobs:
               --restart unless-stopped \
               --network rabbitmq_net \
               --env-file ~/guias-despacho/productor.env \
-              -v ~/guias-despacho/data:/data \
               -v ~/guias-despacho/efs:/mnt/efs \
               -p 8080:8080 \
               ${{ secrets.DOCKERHUB_USERNAME }}/ms-productor-guias:latest
@@ -112,7 +111,6 @@ jobs:
               --restart unless-stopped \
               --network rabbitmq_net \
               --env-file ~/guias-despacho/consumidor.env \
-              -v ~/guias-despacho/data:/data \
               -p 8081:8081 \
               ${{ secrets.DOCKERHUB_USERNAME }}/ms-consumidor-guias:latest
 

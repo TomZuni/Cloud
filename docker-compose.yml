@@ -1,5 +1,16 @@
 version: '3'
 services:
+  h2:
+    image: oscarfonts/h2:2.2.224
+    hostname: h2
+    ports:
+      - "1521:1521"
+      - "81:81"
+    environment:
+      H2_OPTIONS: "-ifNotExists"
+    networks:
+      - rabbitmq
+
   rabbitmq1:
     image: rabbitmq:3-management
     hostname: rabbitmq1
