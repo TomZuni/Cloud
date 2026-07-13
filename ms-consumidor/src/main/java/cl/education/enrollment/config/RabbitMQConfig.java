@@ -46,6 +46,14 @@ public class RabbitMQConfig {
     @Value("${spring.rabbitmq.password}")
     private String password;
 
+    // Lista opcional "host1:puerto1,host2:puerto2" con los nodos del cluster
+    // RabbitMQ (rabbitmq1 y rabbitmq2). Si viene vacia, se usa host/port como
+    // antes (un solo nodo). Con la lista, Spring AMQP reintenta con el
+    // siguiente nodo si el primero no responde: eso es lo que da el failover
+    // real cuando uno de los dos nodos del cluster se cae.
+    @Value("${spring.rabbitmq.addresses:}")
+    private String addresses;
+
     @Bean
     Jackson2JsonMessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
@@ -54,8 +62,15 @@ public class RabbitMQConfig {
     @Bean
     CachingConnectionFactory connectionFactory() {
         CachingConnectionFactory factory = new CachingConnectionFactory();
-        factory.setHost(host);
-        factory.setPort(port);
+        if (addresses != null && !addresses.isBlank()) {
+            // Modo cluster: Spring AMQP prueba cada direccion en orden y, si el
+            // nodo activo se cae, reconecta automaticamente contra el siguiente
+            // (recovery automatico ya viene habilitado por defecto).
+            factory.setAddresses(addresses);
+        } else {
+            factory.setHost(host);
+            factory.setPort(port);
+        }
         factory.setUsername(username);
         factory.setPassword(password);
         return factory;

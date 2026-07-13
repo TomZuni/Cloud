@@ -23,6 +23,9 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    # Lista "rabbitmq1:5672,rabbitmq2:5672" para conectarse al cluster con
+    # failover. Si se deja vacia, se usa el host/port de arriba (un solo nodo).
+    addresses: ${RABBITMQ_ADDRESSES:}
 
 aws:
   region: ${AWS_REGION:us-east-1}

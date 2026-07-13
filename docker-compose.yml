@@ -11,6 +11,7 @@ services:
     networks:
       - rabbitmq
 
+  # Nodo 1 del cluster RabbitMQ. Es el primero en levantar; rabbitmq2 se une a este.
   rabbitmq1:
     image: rabbitmq:3-management
     hostname: rabbitmq1
@@ -21,7 +22,17 @@ services:
       RABBITMQ_ERLANG_COOKIE: 'mysecretcookie'
     networks:
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
+  # Nodo 2 del cluster. Al arrancar espera a que rabbitmq1 este sano, se une al
+  # cluster con rabbitmqctl join_cluster y aplica una politica HA que espeja
+  # (mirror) todas las colas en ambos nodos. Con esto, si rabbitmq1 se cae, las
+  # colas siguen disponibles en rabbitmq2 sin perder mensajes ya confirmados.
   rabbitmq2:
     image: rabbitmq:3-management
     hostname: rabbitmq2
@@ -33,7 +44,20 @@ services:
     networks:
       - rabbitmq
     depends_on:
-      - rabbitmq1
+      rabbitmq1:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        (
+          rabbitmqctl await_startup
+          rabbitmqctl stop_app
+          rabbitmqctl join_cluster rabbit@rabbitmq1
+          rabbitmqctl start_app
+          rabbitmqctl set_policy ha-todas ".*" '{"ha-mode":"all","ha-sync-mode":"automatic"}' --apply-to all
+          echo "rabbitmq2 unido al cluster y politica HA aplicada"
+        ) &
+        exec docker-entrypoint.sh rabbitmq-server
 
 networks:
   rabbitmq:
